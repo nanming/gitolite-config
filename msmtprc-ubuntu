@@ -1,0 +1,15 @@
+defaults
+tls on
+tls_starttls on
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+
+account git
+auth on
+#auth login
+host smtp.qq.com
+port 587
+from git@netmoon.cn
+user git@netmoon.cn
+password netmoon123
+account default : git
+logfile ~/msmtp.log
