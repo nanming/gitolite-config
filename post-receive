@@ -659,11 +659,15 @@ if [ -z "$GIT_DIR" ]; then
 	exit 1
 fi
 
-projectdesc=$(sed -ne '1p' "$GIT_DIR/description")
-# Check if the description is unchanged from it's default, and shorten it to
-# a more manageable length if it is
-if expr "$projectdesc" : "Unnamed repository.*$" >/dev/null
-then
+if [ -f "$GIT_DIR/description" ];then
+	projectdesc=$(sed -ne '1p' "$GIT_DIR/description")
+	# Check if the description is unchanged from it's default, and shorten it to
+	# a more manageable length if it is
+	if expr "$projectdesc" : "Unnamed repository.*$" >/dev/null
+	then
+		projectdesc="UNNAMED PROJECT"
+	fi
+else
 	projectdesc="UNNAMED PROJECT"
 fi
 
@@ -672,15 +676,15 @@ announcerecipients=$(git config hooks.announcelist)
 envelopesender=$(git config hooks.envelopesender)
 emailprefix=$(git config hooks.emailprefix || echo '[SCM] ')
 custom_showrev=$(git config hooks.showrev)
+if [ -z "$recipients" ]; then
+	exit 0
+fi
 
 # --- Main loop
 # Allow dual mode: run from the command line just like the update hook, or
 # if no arguments are given then run as a hook script
 
 #if the repo did not set the mailing.list return immediately 
-if [ -z "$recipients" ]; then
-	exit 0
-fi
 if [ -n "$1" -a -n "$2" -a -n "$3" ]; then
 	# Output to the terminal in command line mode - if someone wanted to
 	# resend an email; they could redirect the output to sendmail

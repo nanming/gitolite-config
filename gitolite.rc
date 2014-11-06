@@ -54,6 +54,7 @@
 
     # the Mirroring feature needs this
         # HOSTNAME                  =>  "foo",
+         HOSTNAME                  =>  "foo",
 
     # if you enabled 'Shell', you need this
         # SHELL_USERS_LIST          =>  "$ENV{HOME}/.gitolite.shell-users",

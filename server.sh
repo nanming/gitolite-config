@@ -31,6 +31,20 @@ do
 	fi
 done
 
+if [ -f /home/$GITOLITE_USER/.gitolite.rc -a -d /home/$GITOLITE_USER/.gitolite -a -d /home/$GITOLITE_USER/repositories ]; then
+	read -p "gitolite has already been installed in user $GITOLITE_USER, do you want to re-install (y/N)?" gitolite_cover
+	if [ "$gitolite_cover" = "y" ]; then
+		rm -fr /home/$GITOLITE_USER/.gitolite.rc
+		rm -fr /home/$GITOLITE_USER/.gitolite
+		rm -fr /home/$GITOLITE_USER/repositories
+	else
+		echo 
+		echo "exiting..."
+		exit 0
+	fi
+fi
+
+
 # check if the user exist, if not, create it
 if ! egrep "$GITOLITE_USER" /etc/passwd >> /dev/null; then
         echo " "
@@ -139,25 +153,31 @@ else
 fi
 
 echo "installing gitolite..."
-su $GITOLITE_USER -c "tar jxf gitolite.tar.bz2 -C ~"
+
+rm -fr /home/$GITOLITE_USER/.gitolite.rc
+rm -fr /home/$GITOLITE_USER/.gitolite
+rm -fr /home/$GITOLITE_USER/repositories
+
+#chown $GITOLITE_USER:$GITOLITE_USER gitolite.tar.bz2
+tar jxf gitolite.tar.bz2 -C /home/$GITOLITE_USER
 su $GITOLITE_USER -c "mkdir -p ~/bin"
 su $GITOLITE_USER -c "~/gitolite/install -to ~/bin"
-su $GITOLITE_USER -c "cp $1 /home/$GITOLITE_USER/ "
-chmod 666 ~/`basename $1`
-chown $GITOLITE_USER:$GITOLITE_USER ~/`basename $1`
+cp $1 /home/$GITOLITE_USER/ 
+chmod 666 /home/$GITOLITE_USER/`basename $1`
+chown $GITOLITE_USER:$GITOLITE_USER /home/$GITOLITE_USER/`basename $1`
 su $GITOLITE_USER -c "~/bin/gitolite setup -pk ~/`basename $1`"
 if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-
-su $GITOLITE_USER -c "sed -i '/'\''cgit'\''/s/#//g' ~/.gitolite.rc"
-su $GITOLITE_USER -c "sed -i '/'\''mirror'\''/s/#//g' ~/.gitolite.rc"
-su $GITOLITE_USER -c "sed -i '/'\''Mirroring'\''/s/#//g' ~/.gitolite.rc"
-su $GITOLITE_USER -c "sed -i '/GIT_CONFIG_KEYS/s/'\'''\''/'\''.*'\''/' ~/.gitolite.rc"
-su $GITOLITE_USER -c "sed -i '/#\{1,\} *HOSTNAME/s/#//g' ~/.gitolite.rc"
-#sed -i '/hello/s/^/#/' hello
-#sed -i '/hello/s/$/#/' hello
+#su $GITOLITE_USER -c "sed -i '/'\''cgit'\''/s/#//g' ~/.gitolite.rc"
+#su $GITOLITE_USER -c "sed -i '/'\''mirror'\''/s/#//g' ~/.gitolite.rc"
+#su $GITOLITE_USER -c "sed -i '/'\''Mirroring'\''/s/#//g' ~/.gitolite.rc"
+#su $GITOLITE_USER -c "sed -i '/GIT_CONFIG_KEYS/s/'\'''\''/'\''.*'\''/' ~/.gitolite.rc"
+#su $GITOLITE_USER -c "sed -i '/#\{1,\} *HOSTNAME/s/#//g' ~/.gitolite.rc"
+cp gitolite.rc /home/$GITOLITE_USER/.gitolite.rc
+chmod 600 /home/$GITOLITE_USER/.gitolite.rc
+chown $GITOLITE_USER:$GITOLITE_USER /home/$GITOLITE_USER/.gitolite.rc
 su $GITOLITE_USER -c "cp post-receive ~/.gitolite/hooks/common/"
 su $GITOLITE_USER -c "chmod a+x ~/.gitolite/hooks/common/post-receive"
 su $GITOLITE_USER -c "~/bin/gitolite setup -ho"
