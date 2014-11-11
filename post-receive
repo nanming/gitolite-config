@@ -693,6 +693,19 @@ if [ -n "$1" -a -n "$2" -a -n "$3" ]; then
 else
 	while read oldrev newrev refname
 	do
+		for i in `ls ~/.gitolite/keydir`
+		do
+		if [[ $i =~ ".pub" ]];then
+			user=${i%.pub}
+			#echo "------------$user-----------------"
+			if [[ $refname =~ "$user"$ ]];then
+				echo "no email will be send..."
+				exit 0
+			fi
+		fi
+		done
 		generate_email $oldrev $newrev $refname | send_mail
 	done
 fi
+
+

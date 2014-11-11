@@ -46,10 +46,11 @@ fi
 
 
 # check if the user exist, if not, create it
-if ! egrep "$GITOLITE_USER" /etc/passwd >> /dev/null; then
+if ! awk -F ':' '{print $1}' /etc/passwd | egrep $GITOLITE_USER -w >> /dev/null; then
+#if ! egrep "$GITOLITE_USER" /etc/passwd >> /dev/null; then
         echo " "
         echo "User $GITOLITE_USER do not exist, create it"
-        adduser $GITOLITE_USER
+	adduser $GITOLITE_USER
 fi
 
 SSH_CONFIG_FILE=/home/$GITOLITE_USER/.ssh/config
@@ -118,13 +119,13 @@ chmod 600 $SSH_CONFIG_FILE
 
 if [ ! -e "/home/$GITOLITE_USER/.gitconfig" ]; then
 	echo "Config the git, ***Please tell me who you are"
-	while [ ! GIT_USER ]
+	while [ ! $GIT_USER ]
 	do
 		read -p "Your name: " GIT_USER
 	done
 	su $GITOLITE_USER -c "git config --global user.name $GIT_USER"
 
-	while [ ! GIT_USER_EMAIL ]
+	while [ ! $GIT_USER_EMAIL ]
 	do
 		read -p "Your email: " GIT_USER_EMAIL
 	done
