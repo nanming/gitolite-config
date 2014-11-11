@@ -3,6 +3,7 @@
 USER=`whoami`
 system_version=`lsb_release -i`
 SSH_KEY_GEN_FLAG=1
+pwd_dir=`pwd`
 trap 'echo;echo Term signal catched, exit now!;reset -I; exit 1' INT
 
 function usage()
@@ -47,10 +48,9 @@ fi
 
 # check if the user exist, if not, create it
 if ! awk -F ':' '{print $1}' /etc/passwd | egrep $GITOLITE_USER -w >> /dev/null; then
-#if ! egrep "$GITOLITE_USER" /etc/passwd >> /dev/null; then
         echo " "
         echo "User $GITOLITE_USER do not exist, create it"
-	adduser $GITOLITE_USER
+        adduser $GITOLITE_USER
 fi
 
 SSH_CONFIG_FILE=/home/$GITOLITE_USER/.ssh/config
@@ -123,33 +123,45 @@ if [ ! -e "/home/$GITOLITE_USER/.gitconfig" ]; then
 	do
 		read -p "Your name: " GIT_USER
 	done
+	cd /home/$GITOLITE_USER
 	su $GITOLITE_USER -c "git config --global user.name $GIT_USER"
+	cd $pwd_dir
 
 	while [ ! $GIT_USER_EMAIL ]
 	do
 		read -p "Your email: " GIT_USER_EMAIL
 	done
-	su $GITOLITE_USER -c "git config --global user.name $GIT_USER_EMAIL"
+	cd /home/$GITOLITE_USER
+	su $GITOLITE_USER -c "git config --global user.email $GIT_USER_EMAIL"
+	cd $pwd_dir
 else
 	user_repeat="y"
 	email_repeat="y"
+	cd /home/$GITOLITE_USER
 	GIT_USER=`su $GITOLITE_USER -c "git config --get user.name"`
+	cd $pwd_dir
 	read -p "Your name: $GIT_USER (Y/n)?" user_repeat
 	if [ "$user_repeat" = "n" ]; then
 		while [ ! $GIT_USER_TMP ]
 		do
 			read -p "Your name: " GIT_USER_TMP
 		done
+		cd /home/$GITOLITE_USER
 		su $GITOLITE_USER -c "git config --global user.name $GIT_USER_TMP"
+		cd $pwd_dir
 	fi
+	cd /home/$GITOLITE_USER
 	GIT_USER_EMAIL=`su $GITOLITE_USER -c "git config --get user.email"`
+	cd $pwd_dir
 	read -p "Your email: $GIT_USER_EMAIL (Y/n)?" email_repeat 
 	if [ "$email_repeat" = "n" ]; then
 		while [ ! $GIT_USER_EMAIL_TMP ]
 		do
 			read -p "Your email: " GIT_USER_EMAIL_TMP
 		done
+		cd /home/$GITOLITE_USER
 		su $GITOLITE_USER -c "git config --global user.email $GIT_USER_EMAIL_TMP"
+		cd $pwd_dir
 	fi
 fi
 
@@ -159,7 +171,6 @@ rm -fr /home/$GITOLITE_USER/.gitolite.rc
 rm -fr /home/$GITOLITE_USER/.gitolite
 rm -fr /home/$GITOLITE_USER/repositories
 
-#chown $GITOLITE_USER:$GITOLITE_USER gitolite.tar.bz2
 tar jxf gitolite.tar.bz2 -C /home/$GITOLITE_USER
 su $GITOLITE_USER -c "mkdir -p ~/bin"
 su $GITOLITE_USER -c "~/gitolite/install -to ~/bin"
