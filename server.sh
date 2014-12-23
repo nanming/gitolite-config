@@ -216,7 +216,7 @@ else
 	cp msmtprc-centos /home/$GITOLITE_USER/.msmtprc
 	which mutt >> /dev/null
 	if [ $? -ne 0 ] ; then
-		yum install mutt
+		echo 'y' | yum install mutt
 	fi
 fi
 chmod 600 /home/$GITOLITE_USER/.msmtprc
