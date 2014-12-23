@@ -1,0 +1,14 @@
+#!/bin/sh
+#
+# An example hook script to prepare a packed repository for use over
+# dumb transports.
+#
+# To enable this hook, rename this file to "post-update".
+
+#exec git update-server-info
+
+home=$HOME
+pwd_cur=`pwd`
+repo_dir=`echo ${pwd_cur#*$home/}`
+ssh platform "cd ~; [ -d $repo_dir ] && cd $repo_dir && git remote update"
+ssh wlan "cd ~; [ -d $repo_dir ] && cd $repo_dir && git remote update"

@@ -55,6 +55,7 @@ fi
 
 SSH_CONFIG_FILE=/home/$GITOLITE_USER/.ssh/config
 [ -d /home/$GITOLITE_USER/.ssh ] || su $GITOLITE_USER -c "mkdir /home/$GITOLITE_USER/.ssh -p"; 
+[ -f /home/$GITOLITE_USER/.ssh/config ] && mv /home/$GITOLITE_USER/.ssh/config /home/$GITOLITE_USER/.ssh/config.bak
 
 su $GITOLITE_USER -c "echo \"host netmoon\" > $SSH_CONFIG_FILE "
 su $GITOLITE_USER -c "echo \"  user git\" >> $SSH_CONFIG_FILE"

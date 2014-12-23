@@ -135,19 +135,20 @@ generate_email()
 			refname_type="branch"
 			short_refname=${refname##refs/heads/}
 			;;
-		refs/remotes/*,commit)
+		#refs/remotes/*,commit)
 			# tracking branch
-			refname_type="tracking branch"
-			short_refname=${refname##refs/remotes/}
-			echo >&2 "*** Push-update of tracking branch, $refname"
-			echo >&2 "***  - no email generated."
-			exit 0
-			;;
+			#refname_type="tracking branch"
+			#short_refname=${refname##refs/remotes/}
+			#echo >&2 "*** Push-update of tracking branch, $refname"
+			#echo >&2 "***  - no email generated."
+			#exit 0
+			#;;
 		*)
 			# Anything else (is there anything else?)
-			echo >&2 "*** Unknown type of update to $refname ($rev_type)"
-			echo >&2 "***  - no email generated"
-			exit 1
+			#echo >&2 "*** Unknown type of update to $refname ($rev_type)"
+			#echo >&2 "***  - no email generated"
+			#exit 1
+			continue
 			;;
 	esac
 
@@ -196,13 +197,6 @@ generate_email_header()
 	# --- Email (all stdout will be the email)
 	# Generate header
 	cat <<-EOF
-	FROM: $USER_EMAIL
-	To: $recipients
-	Subject: ${emailprefix}$projectdesc $refname_type, $short_refname, ${change_type}d. $describe
-	X-Git-Refname: $refname
-	X-Git-Reftype: $refname_type
-	X-Git-Oldrev: $oldrev
-	X-Git-Newrev: $newrev
 
 	The $refname_type, $short_refname has been ${change_type}d
 	EOF
@@ -211,8 +205,8 @@ generate_email_header()
 generate_email_footer()
 {
 	SPACE=" "
+	sed -i "/Subject:/s/$/ $refname_type $short_refname ${change_type}d./" ./email.tmp
 	cat <<-EOF
-
 
 	hooks/post-receive
 	--${SPACE}
@@ -228,7 +222,7 @@ generate_email_footer()
 generate_create_branch_email()
 {
 	# This is a new branch and so oldrev is not valid
-	echo "        at  $newrev ($newrev_type)"
+	#echo "        at  $newrev ($newrev_type)"
 	echo ""
 
 	echo $LOGBEGIN
@@ -321,7 +315,7 @@ generate_update_branch_email()
 	for rev in $(git rev-list $newrev..$oldrev)
 	do
 		revtype=$(git cat-file -t "$rev")
-		echo "  discards  $rev ($revtype)"
+		#echo "  discards  $rev ($revtype)"
 	done
 	if [ -z "$rev" ]; then
 		fast_forward=1
@@ -335,12 +329,13 @@ generate_update_branch_email()
 	for rev in $(git rev-list $oldrev..$newrev)
 	do
 		revtype=$(git cat-file -t "$rev")
-		echo "       via  $rev ($revtype)"
+		#echo "       via  $rev ($revtype)"
 	done
 
-	if [ "$fast_forward" ]; then
-		echo "      from  $oldrev ($oldrev_type)"
-	else
+	if [ ! "$fast_forward" ]; then
+		#echo ""
+		#echo "      from  $oldrev ($oldrev_type)"
+	#else
 		#  1. Existing revisions were removed.  In this case newrev
 		#     is a subset of oldrev - this is the reverse of a
 		#     fast-forward, a rewind
@@ -351,46 +346,47 @@ generate_update_branch_email()
 		# happened, we set a flag to indicate that no log printout
 		# is required.
 
-		echo ""
+		#echo ""
 
 		# Find the common ancestor of the old and new revisions and
 		# compare it with newrev
 		baserev=$(git merge-base $oldrev $newrev)
 		rewind_only=""
 		if [ "$baserev" = "$newrev" ]; then
-			echo "This update discarded existing revisions and left the branch pointing at"
-			echo "a previous point in the repository history."
-			echo ""
-			echo " * -- * -- N ($newrev)"
-			echo "            \\"
-			echo "             O -- O -- O ($oldrev)"
-			echo ""
-			echo "The removed revisions are not necessarilly gone - if another reference"
-			echo "still refers to them they will stay in the repository."
+			#echo "This update discarded existing revisions and left the branch pointing at"
+			#echo "a previous point in the repository history."
+			#echo ""
+			#echo " * -- * -- N ($newrev)"
+			#echo "            \\"
+			#echo "             O -- O -- O ($oldrev)"
+			#echo ""
+			#echo "The removed revisions are not necessarilly gone - if another reference"
+			#echo "still refers to them they will stay in the repository."
 			rewind_only=1
 		else
-			echo "This update added new revisions after undoing existing revisions.  That is"
-			echo "to say, the old revision is not a strict subset of the new revision.  This"
-			echo "situation occurs when you --force push a change and generate a repository"
-			echo "containing something like this:"
 			echo ""
-			echo " * -- * -- B -- O -- O -- O ($oldrev)"
-			echo "            \\"
-			echo "             N -- N -- N ($newrev)"
-			echo ""
-			echo "When this happens we assume that you've already had alert emails for all"
-			echo "of the O revisions, and so we here report only the revisions in the N"
-			echo "branch from the common base, B."
+			#echo "This update added new revisions after undoing existing revisions.  That is"
+			#echo "to say, the old revision is not a strict subset of the new revision.  This"
+			#echo "situation occurs when you --force push a change and generate a repository"
+			#echo "containing something like this:"
+			#echo ""
+			#echo " * -- * -- B -- O -- O -- O ($oldrev)"
+			#echo "            \\"
+			#echo "             N -- N -- N ($newrev)"
+			#echo ""
+			#echo "When this happens we assume that you've already had alert emails for all"
+			#echo "of the O revisions, and so we here report only the revisions in the N"
+			#echo "branch from the common base, B."
 		fi
 	fi
 
 	echo ""
 	if [ -z "$rewind_only" ]; then
-		echo "Those revisions listed above that are new to this repository have"
-		echo "not appeared on any other notification email; so we list those"
-		echo "revisions in full, below."
+		#echo "Those revisions listed above that are new to this repository have"
+		#echo "not appeared on any other notification email; so we list those"
+		#echo "revisions in full, below."
 
-		echo ""
+		#echo ""
 		echo $LOGBEGIN
 		show_new_revisions
 
@@ -400,7 +396,9 @@ generate_update_branch_email()
 
 		echo $LOGEND
 	else
-		echo "No new revisions were added by this update."
+		echo $LOGBEGIN
+		echo "No new revisions were added by this update." 
+		echo $LOGEND
 	fi
 
 	# The diffstat is shown from the old revision to the new revision.
@@ -410,9 +408,9 @@ generate_update_branch_email()
 	# point - the user will be interested in what this revision changed
 	# - including the undoing of previous revisions in the case of
 	# non-fast-forward updates.
-	echo ""
-	echo "Summary of changes:"
-	git diff-tree --stat --summary --find-copies-harder $oldrev..$newrev
+	#echo ""
+	#echo "Summary of changes:"
+	#git diff-tree --stat --summary --find-copies-harder $oldrev..$newrev
 }
 
 #
@@ -420,7 +418,7 @@ generate_update_branch_email()
 #
 generate_delete_branch_email()
 {
-	echo "       was  $oldrev"
+	#echo "       was  $oldrev"
 	echo ""
 	echo $LOGEND
 	git show -s --pretty=oneline $oldrev
@@ -434,7 +432,7 @@ generate_delete_branch_email()
 #
 generate_create_atag_email()
 {
-	echo "        at  $newrev ($newrev_type)"
+	#echo "        at  $newrev ($newrev_type)"
 
 	generate_atag_email
 }
@@ -445,8 +443,8 @@ generate_create_atag_email()
 #
 generate_update_atag_email()
 {
-	echo "        to  $newrev ($newrev_type)"
-	echo "      from  $oldrev (which is now obsolete)"
+	#echo "        to  $newrev ($newrev_type)"
+	#echo "      from  $oldrev (which is now obsolete)"
 
 	generate_atag_email
 }
@@ -465,7 +463,7 @@ generate_atag_email()
 	tagged=%(taggerdate)' $refname
 	)
 
-	echo "   tagging  $tagobject ($tagtype)"
+	#echo "   tagging  $tagobject ($tagtype)"
 	case "$tagtype" in
 	commit)
 
@@ -483,7 +481,7 @@ generate_atag_email()
 		;;
 	esac
 	echo " tagged by  $tagger"
-	echo "        on  $tagged"
+	#echo "        on  $tagged"
 
 	echo ""
 	echo $LOGBEGIN
@@ -520,7 +518,7 @@ generate_atag_email()
 #
 generate_delete_atag_email()
 {
-	echo "       was  $oldrev"
+	#echo "       was  $oldrev"
 	echo ""
 	echo $LOGEND
 	git show -s --pretty=oneline $oldrev
@@ -535,7 +533,7 @@ generate_delete_atag_email()
 #
 generate_create_general_email()
 {
-	echo "        at  $newrev ($newrev_type)"
+	#echo "        at  $newrev ($newrev_type)"
 
 	generate_general_email
 }
@@ -546,8 +544,8 @@ generate_create_general_email()
 #
 generate_update_general_email()
 {
-	echo "        to  $newrev ($newrev_type)"
-	echo "      from  $oldrev"
+	#echo "        to  $newrev ($newrev_type)"
+	#echo "      from  $oldrev"
 
 	generate_general_email
 }
@@ -576,7 +574,9 @@ generate_general_email()
 		# a commit, so there is no log for us to display.  It's
 		# probably not wise to output git cat-file as it could be a
 		# binary blob.  We'll just say how big it is
+		echo $LOGBEGIN
 		echo "$newrev is a $newrev_type, and is $(git cat-file -s $newrev) bytes long."
+		echo $LOGEND
 	fi
 }
 
@@ -585,7 +585,7 @@ generate_general_email()
 #
 generate_delete_general_email()
 {
-	echo "       was  $oldrev"
+	#echo "       was  $oldrev"
 	echo ""
 	echo $LOGEND
 	git show -s --pretty=oneline $oldrev
@@ -647,8 +647,9 @@ send_mail()
 # ---------------------------- main()
 
 # --- Constants
-LOGBEGIN="- Log -----------------------------------------------------------------"
-LOGEND="-----------------------------------------------------------------------"
+#LOGBEGIN="- Log -----------------------------------------------------------------"
+LOGBEGIN=""
+LOGEND="-------------------------------------------------------------------"
 
 # --- Config
 # Set GIT_DIR either from the working directory, or from the environment
@@ -691,21 +692,33 @@ if [ -n "$1" -a -n "$2" -a -n "$3" ]; then
 	# themselves
 	PAGER= generate_email $2 $3 $1
 else
+	rm ./email.tmp -rf
+	pwd_dir=`pwd`
+	repo_name=`basename $pwd_dir`
+	echo "Subject: ${emailprefix}$projectdesc ${repo_name%.git}'s " >> ./email.tmp
+	echo "FROM: $USER_EMAIL" >> ./email.tmp
+	echo "To: $recipients" >> ./email.tmp
+
 	while read oldrev newrev refname
 	do
-		for i in `ls ~/.gitolite/keydir`
-		do
-		if [[ $i =~ ".pub" ]];then
-			user=${i%.pub}
-			#echo "------------$user-----------------"
-			if [[ $refname =~ "$user"$ ]];then
-				echo "no email will be send..."
-				exit 0
-			fi
-		fi
-		done
-		generate_email $oldrev $newrev $refname | send_mail
+		#for i in `ls ~/.gitolite/keydir`
+		#do
+		#if [[ $i =~ ".pub" ]];then
+			#user=${i%.pub}
+			##echo "------------$user-----------------"
+			#if [[ $refname =~ "$user"$ ]];then
+				#echo "no email will be send..."
+				#exit 0
+			#fi
+		#fi
+		#done
+		#generate_email $oldrev $newrev $refname | send_mail
+		#echo '-------'$refname=====$newrev*******$oldrev
+		generate_email $oldrev $newrev $refname >> ./email.tmp
 	done
+	sed -i '$d' ./email.tmp
+	echo "sending email to $recipients"
+	cat ./email.tmp | send_mail
 fi
 
 
